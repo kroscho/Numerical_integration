@@ -97,11 +97,13 @@ func calculateIntegral(a, b float64, method int) {
 	case 1:
 		{
 			fmt.Println("Trapezium method:")
+			tet = 1./3
 			break
 		}
 	case 2:
 		{
 			fmt.Println("Modified trapezium method:")
+			tet = 1./3
 			break
 		}
 	case 3:
@@ -138,7 +140,7 @@ func calculateIntegral(a, b float64, method int) {
 	if method!=4 {
 		count += 2
 	}
-	fmt.Println("Result: ", sum, "\nNumber of requests: ", count)
+	fmt.Println("\nResult: ", sum, "\nNumber of requests: ", count, "\n\n")
 }
 
 func main() {
