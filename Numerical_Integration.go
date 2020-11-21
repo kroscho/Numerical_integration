@@ -27,7 +27,7 @@ func dF(x float64) float64 {
 }
 
 //Вычисление интеграла на определенном шаге
-func partIntegral(N int, a, b, h float64, method, k int) float64 {
+func partIntegral(N int, a, b, h float64, method int, k *int) float64 {
 	var sum float64 = 0
 	switch method {
 	//формула трапеций
@@ -38,7 +38,7 @@ func partIntegral(N int, a, b, h float64, method, k int) float64 {
 				var _b float64 = a + float64(i+1)*h
 				sum += (_b - _a) * (f(_a) + f(_b)) / 2.
 			}
-			k += N / 2
+			*k += N / 2
 			break
 		}
 	//модифицированная формула трапеций
@@ -48,7 +48,7 @@ func partIntegral(N int, a, b, h float64, method, k int) float64 {
 				sum += f(a + float64(i)*h)
 			}
 			sum = h*((f(a)+f(b))/2.+sum) + (h*h)/12.*(dF(a)-dF(b))
-			k += N / 2
+			*k += N / 2
 			break
 		}
 	//формула Симпсона
@@ -57,22 +57,23 @@ func partIntegral(N int, a, b, h float64, method, k int) float64 {
 			for i:=0; i<N; i++ {
 				var _a float64 = a+float64(i)*h
 				var _b float64 = a+float64(i+1)*h
-				sum += ((_b-_a)/6)*(f(_a)+4*f((_a+_b)/2)+f(_b))
+				sum += ((_b-_a)/6.)*(f(_a)+4*f((_a+_b)/2.)+f(_b))
 			}
-			k+=N
+			*k+=N
 			break
 		}
 	//формула Гаусса
 	case 4:
 		{
-			var k, a02, a1 float64
-			k=0
+			var iterX, a02, a1 float64
+			iterX=0
 			a02 = 5./9
 			a1 = 8./9
 			for i:=0; i<N; i++ {
-				k = a + (2*float64(i) + 1)*h/2
-				sum += h/2.*(a02*f(k-h*math.Sqrt(0.6)/2.)+a1*f(k)+a02*f(k+h*math.Sqrt(0.6)/2.))
-				k+=3
+				iterX = a + (2*float64(i) + 1)*h/2
+				sum += h/2.*(a02*f(iterX-h*math.Sqrt(0.6)/2.)+
+						a1*f(iterX)+a02*f(iterX+h*math.Sqrt(0.6)/2.))
+				*k+=3
 			}
 			break
 		}
@@ -81,7 +82,7 @@ func partIntegral(N int, a, b, h float64, method, k int) float64 {
 }
 
 func print(N int, h, sum, err, k float64) {
-	fmt.Println(N, "  |  ", h, "  |  ", sum, "   |   ", err, "   |   ", k )
+	fmt.Printf("|%-6d|%-8.4f|%-10.6f|%-20e|%-8.4f|\n", N, h, sum, err, k)
 }
 
 //вычисление интеграла
@@ -93,42 +94,50 @@ func calculateIntegral(a, b float64, method int) {
 	h = 1
 	sum = 0
 	err = 1
+
+	s0 = partIntegral(N, a, b, h, method, &count)
+	s1 = partIntegral(N*2, a, b, h/2, method, &count)
+
 	switch method {
 	case 1:
 		{
 			fmt.Println("Trapezium method:")
 			tet = 1./3
+			count = 0
 			break
 		}
 	case 2:
 		{
 			fmt.Println("Modified trapezium method:")
 			tet = 1./3
+			count = 0
 			break
 		}
 	case 3:
 		{
 			fmt.Println("Simpson Method:")
 			tet = 1./15
+			count = 0
 			break
 		}
 	case 4:
 		{
 			fmt.Println("Gauss method:")
 			tet = 1./63
+			count = 0
 			break
 		}
 	}
-	fmt.Println("N     |    h    |    Integral  | Error estimate |  k   ")
+	fmt.Println("N      |    h   | Integral | Error estimate     |  k     |")
 
-	s0 = partIntegral(N, a, b, h, method, count)
-	s1 = partIntegral(N*2, a, b, h, method, count)
+	//s0 = partIntegral(N, a, b, h, method, count)
+	//s1 = partIntegral(N*2, a, b, h/2, method, count)
 	k=0
 
 	for math.Abs(err)>eps {
 		term = sum
 		h = (b - a)/float64(N)
-		sum = partIntegral(N, a, b, h, method, count)
+		sum = partIntegral(N, a, b, h, method, &count)
 		err = (sum - term) * tet
 		//эмпирическая оценка порядка аппроксимации
 		k = math.Log((sum-s0)/(s1-s0)-1.)/math.Log(0.5)
